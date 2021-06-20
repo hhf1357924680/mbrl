@@ -1,0 +1,6 @@
+如何将GitHub上面的代码库下载到本地？
+1.在github打开想要down的库
+2.得到想要库的ssh
+3.在本地terminal的bash输入命令：git clone git@github.com:facebookresearch/mbrl-lib.git
+         此处git@github.com:facebookresearch/mbrl-lib.git是你想要在GitHub上down的库
+
