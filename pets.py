@@ -172,7 +172,7 @@ for trial in range(num_trials):
     done = False
     total_reward = 0.0
     steps_trial = 0
-    update_axes(axs, env.render(mode="rgb_array"), ax_text, trial, steps_trial, all_rewards)
+    update_axes(axs,env.render(mode="rgb_array"), ax_text, trial, steps_trial, all_rewards)
     while not done:
         # --------------- Model Training -----------------
         if steps_trial == 0:
