@@ -1,5 +1,5 @@
 from IPython import display
-%matplotlib inline
+#%matplotlib inline
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,8 +15,11 @@ import mbrl.util.common as common_util
 import mbrl.util as util
 
 
-%load_ext autoreload
-%autoreload 2
+import os
+os.environ["DISPLAY"]="127.0.0.1:0.0"
+
+#%load_ext autoreload
+#%autoreload 2
 
 mpl.rcParams.update({"font.size": 16})
 
