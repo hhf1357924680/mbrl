@@ -15,6 +15,7 @@ import mbrl.util.common as common_util
 import mbrl.util as util
 
 
+
 import os
 os.environ["DISPLAY"]="127.0.0.1:0.0"
 
