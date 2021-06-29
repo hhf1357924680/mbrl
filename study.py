@@ -36,7 +36,7 @@ s = 10
 v = 5
 x_t = np.zeros(2 * s)
 y_t = np.zeros(2 * s)
-x_v = np.zeros(2 * v)#val的样本量是400
+x_v = np.zeros(2 * v)
 y_v = np.zeros(2 * v)
 
 m=0.5
@@ -50,6 +50,8 @@ x_v[:v] = x_1[t[s:]]
 y_v[:v] = y_1[t[s:]] 
 y_v[:v] = y_v[:v] + m * np.random.randn(v)
 
+
+
 mag = 0.05
 x_train[:train_size] = x_data[train_val_idx_1[:train_size]]
 y_train[:train_size] = y_data[train_val_idx_1[:train_size]] + mag * np.random.randn(train_size)
@@ -59,3 +61,17 @@ y_val[:val_size] = y_data[train_val_idx_1[train_size:]] + mag * np.random.randn(
 plt.figure(figsize=(5, 4))#plt.figure(figsize=(16,8))表示figure 的大小为宽、长
 plt.plot(x_1, y_1, x_t, y_t, '^',x_v, y_v, 'o', markersize=6)
 plt.show()
+
+
+#1.从fin-rl中取出aapl的数据放入mbrl中
+#2.选取2000-01-01   2021-06-20共5000左右
+#3.选取1500train  500val  
+
+df.head()
+df.sort_values(["date", "tic"]).head()
+#取出数据集的第1列和第3列
+#方法1
+df.loc[:,['close']]
+data = df[['close']]
+data
+
