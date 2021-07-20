@@ -409,3 +409,4 @@ class GaussianMLP(Ensemble):
                 self.elite_models = pickle.load(f)
         else:
             warnings.warn("No elite model information found in model load directory.")
+
