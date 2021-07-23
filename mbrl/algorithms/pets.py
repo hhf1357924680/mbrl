@@ -20,7 +20,6 @@ import mbrl.util.math
 
 EVAL_LOG_FORMAT = mbrl.constants.EVAL_LOG_FORMAT
 
-
 def train(
     env: gym.Env,
     termination_fn: mbrl.types.TermFnType,

@@ -14,7 +14,7 @@ from mbrl.types import TransitionBatch
 def _consolidate_batches(batches: Sequence[TransitionBatch]) -> TransitionBatch:
     len_batches = len(batches)
     b0 = batches[0]
-    obs = np.empty((len_batches,) + b0.obs.shape, dtype=b0.obs.dtype)
+    obs = np.empty((len_batches,) + b0.obs.shape, dtype=b0.obs.dtype)#Return a new array of given shape and type, without initializing entries.
     act = np.empty((len_batches,) + b0.act.shape, dtype=b0.act.dtype)
     next_obs = np.empty((len_batches,) + b0.obs.shape, dtype=b0.obs.dtype)
     rewards = np.empty((len_batches,) + b0.rewards.shape, dtype=np.float32)
