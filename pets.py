@@ -176,7 +176,7 @@ for trial in range(num_trials):
     done = False
     total_reward = 0.0
     steps_trial = 0
-    update_axes(axs,env.render(mode="rgb_array"), ax_text, trial, steps_trial, all_rewards)
+    #update_axes(axs,env.render(mode="rgb_array"), ax_text, trial, steps_trial, all_rewards)
     while not done:
         # --------------- Model Training -----------------
         if steps_trial == 0:
@@ -197,7 +197,7 @@ for trial in range(num_trials):
         # --- Doing env step using the agent and adding to model dataset ---
         next_obs, reward, done, _ = common_util.step_env_and_add_to_buffer(env, obs, agent, {}, replay_buffer)
             
-        update_axes(axs, env.render(mode="rgb_array"), ax_text, trial, steps_trial, all_rewards)
+        #update_axes(axs, env.render(mode="rgb_array"), ax_text, trial, steps_trial, all_rewards)
         
         obs = next_obs
         total_reward += reward
@@ -208,7 +208,7 @@ for trial in range(num_trials):
     
     all_rewards.append(total_reward)
 
-update_axes(axs, env.render(mode="rgb_array"), ax_text, trial, steps_trial, all_rewards, force_update=True)
+#update_axes(axs, env.render(mode="rgb_array"), ax_text, trial, steps_trial, all_rewards, force_update=True)
 
 
 fig, ax = plt.subplots(2, 1, figsize=(12, 10))

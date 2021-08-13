@@ -1,4 +1,4 @@
 {
-    "python.pythonPath": ".venv/bin/python",
-    "jupyter.jupyterServerType": "local"
+    "python.pythonPath": "../gymenv/bin/python",
+    "python.defaultInterpreterPath": "../gymenv/bin/python",
 }

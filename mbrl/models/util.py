@@ -50,6 +50,7 @@ class EnsembleLinearLayer(nn.Module):
         self.elite_models: List[int] = None
         self.use_only_elite = False
 
+#x.shape--([32, 1]); self.weight.shape--([5, 1, 64])
     def forward(self, x):
         if self.use_only_elite:
             xw = x.matmul(self.weight[self.elite_models, ...])

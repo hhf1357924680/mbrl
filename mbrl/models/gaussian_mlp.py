@@ -145,8 +145,10 @@ class GaussianMLP(Ensemble):
         if self.deterministic:
             return mean_and_logvar, None
         else:
-            mean = mean_and_logvar[..., : self.out_size]
-            logvar = mean_and_logvar[..., self.out_size :]
+            #...表示保留全部，此处a[... , b]
+            mean = mean_and_logvar[..., : self.out_size]#mean.shape [5, 32, 1];mean_and_logvar.shape [5, 32, 2]
+            logvar = mean_and_logvar[..., self.out_size :]#logvar.shape [5, 32, 1]
+            #self.max_logvar=0.5
             logvar = self.max_logvar - F.softplus(self.max_logvar - logvar)
             logvar = self.min_logvar + F.softplus(logvar - self.min_logvar)
             return mean, logvar

@@ -13,6 +13,11 @@ import mbrl.util.replay_buffer as replay_buffer
 device = torch.device("cuda:0")
 
 
+
+aapl = pd.read_csv('./dataset/mbrl.csv')
+aapl1 = aapl[['date','open','high','low','close','volume']]
+print(aapl1)
+
 mpl.rcParams['figure.facecolor'] = 'white'
 
 x_data = np.array(range(5401))
@@ -103,5 +108,3 @@ def _consolidate_batches(batches: Sequence[TransitionBatch]) -> TransitionBatch:
         rewards[i] = b.rewards
         dones[i] = b.dones
     return TransitionBatch(obs, act, next_obs, rewards, dones)
-
-git@github.com:hhf1357924680/mbrl.git
