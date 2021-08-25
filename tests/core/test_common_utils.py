@@ -5,6 +5,7 @@
 import numpy as np
 import omegaconf
 import pytest
+import torch
 
 import mbrl.models as models
 import mbrl.util
@@ -19,6 +20,7 @@ class MockModel(models.Model):
         self.x = x
         self.y = y
         self.device = "cpu"
+        self.net = torch.nn.Linear(in_size, out_size)
 
     def loss(self, model_in, target):
         pass
@@ -59,6 +61,8 @@ def test_create_one_dim_tr_model():
     assert dynamics_model.model.x == 1 and dynamics_model.model.y == 2
     assert dynamics_model.num_elites is None
     assert dynamics_model.no_delta_list == []
+    # default when no normalization type is given is float
+    assert dynamics_model.input_normalizer.mean.dtype == torch.float32
 
     # Check given input/output sizes, overrides active, and no learned rewards option
     cfg.dynamics_model.model.in_size = 11
@@ -74,6 +78,14 @@ def test_create_one_dim_tr_model():
     assert dynamics_model.num_elites == 8
     assert dynamics_model.no_delta_list == [0]
     assert dynamics_model.obs_process_fn == mock_obs_func
+
+    # Test normalization option
+    for double_norm in [True, False]:
+        cfg_dict["algorithm"]["normalize_double_precision"] = double_norm
+        cfg = omegaconf.OmegaConf.create(cfg_dict)
+        dynamics_model = utils.create_one_dim_tr_model(cfg, obs_shape, act_shape)
+        dtype = torch.double if double_norm else torch.float32
+        assert dynamics_model.input_normalizer.mean.dtype == dtype
 
 
 def test_create_replay_buffer():
@@ -102,10 +114,20 @@ def test_create_replay_buffer():
     _check_shapes(num_trials * trial_length)
 
     # Now add a training bootstrap and override the dataset size
-    cfg_dict["algorithm"]["dataset_size"] = 1500
-    cfg = omegaconf.OmegaConf.create(cfg_dict)
-    buffer = utils.create_replay_buffer(cfg, obs_shape, act_shape)
-    _check_shapes(1500)
+    for dtype in [np.float32, np.double]:
+        cfg_dict["algorithm"]["dataset_size"] = 1500
+        cfg = omegaconf.OmegaConf.create(cfg_dict)
+        buffer = utils.create_replay_buffer(
+            cfg,
+            obs_shape,
+            act_shape,
+            obs_type=dtype,
+            action_type=dtype,
+            reward_type=dtype,
+        )
+        for array in [buffer.obs, buffer.action, buffer.reward]:
+            assert array.dtype == dtype
+        _check_shapes(1500)
 
 
 class MockModelEnv:
@@ -240,3 +262,83 @@ def test_populate_replay_buffer_collect_trajectories():
     )
     assert buffer.num_stored == num_trials * _MOCK_TRAJ_LEN
     assert len(buffer.trajectory_indices) == num_trials
+
+
+def test_get_basic_buffer_iterators():
+    buffer = mbrl.util.replay_buffer.ReplayBuffer(1000, (1,), (1,))
+    dummy = np.ones(1)
+    for i in range(900):
+        buffer.add(dummy, dummy, dummy, i, False)
+
+    train_iter, val_iter = mbrl.util.common.get_basic_buffer_iterators(buffer, 32, 0.1)
+    assert train_iter.num_stored == 810 and val_iter.num_stored == 90
+    all_rewards = []
+    for it in [train_iter, val_iter]:
+        for batch in it:
+            _, _, _, reward, _ = batch.astuple()
+            all_rewards.extend(reward)
+    assert sorted(all_rewards) == list(range(900))
+
+
+def test_get_sequence_buffer_iterators():
+    buffer = mbrl.util.replay_buffer.ReplayBuffer(
+        1000, (1,), (1,), max_trajectory_length=20
+    )
+    dummy = np.ones(1)
+    num_trajectories_train = 27
+    num_trajectories_val = 3
+    k = 0
+    for i in range(num_trajectories_train):
+        for j in range(20):
+            buffer.add(dummy, dummy, dummy, k, False)
+            k += 1
+        buffer.close_trajectory()
+    for i in range(num_trajectories_val):
+        for j in range(20):
+            buffer.add(dummy, dummy, dummy, k, False)
+            k += 1
+        buffer.close_trajectory()
+
+    for sequence_length in range(1, 20):
+        shuffle_each_epoch = np.random.random() > 0.5
+        train_iter, val_iter = mbrl.util.common.get_sequence_buffer_iterator(
+            buffer, 32, 0.1, sequence_length, 3, shuffle_each_epoch=shuffle_each_epoch
+        )
+        assert train_iter._shuffle_each_epoch == shuffle_each_epoch
+        assert val_iter._shuffle_each_epoch == shuffle_each_epoch
+        # For trajectories of length 20 and sequence length L, there are
+        # 20 - L  + 1 possible start states.
+        # There are 30 trajectories in total, so 10% is 3 trajectories
+        assert val_iter.num_stored == 3 * (21 - sequence_length)
+        assert train_iter.num_stored == 27 * (21 - sequence_length)
+
+        train_rewards = []
+        for batch in train_iter:
+            assert batch.rewards.ndim == 3  # (ensemble, batch_size, sequence)
+            _, _, _, reward, _ = batch.astuple()
+            train_rewards.append(reward)  # only need start of sequence
+        train_rewards = np.unique(np.concatenate(train_rewards, axis=1))
+        val_rewards = []
+        for batch in val_iter:
+            assert batch.rewards.ndim == 2  # (batch_size, sequence) since non-bootstrap
+            _, _, _, reward, _ = batch.astuple()
+            val_rewards.append(reward)  # only need start of sequence
+        val_rewards = np.unique(np.concatenate(val_rewards, axis=0))
+        # Check that validation and training were separate splits
+        assert np.intersect1d(train_rewards, val_rewards).size == 0
+
+
+def test_model_trainer_maybe_get_best_weights_negative_score():
+    model = MockModel(1, 1, 1, 1)
+    model_trainer = models.ModelTrainer(model)
+    previous_eval_value = torch.tensor(-10.0)
+    eval_value_larger = torch.tensor(-1.0)
+    eval_value_smaller = torch.tensor(-100.0)
+    assert (
+        model_trainer.maybe_get_best_weights(previous_eval_value, eval_value_larger)
+        is None
+    )
+    assert (
+        model_trainer.maybe_get_best_weights(previous_eval_value, eval_value_smaller)
+        is not None
+    )
