@@ -7,6 +7,9 @@ import numpy as np
 import omegaconf
 import torch
 
+import os,sys
+sys.path.append(os.path.realpath("../.."))
+
 import mbrl.algorithms.mbpo as mbpo
 import mbrl.algorithms.pets as pets
 import mbrl.util.mujoco as mujoco_util
